@@ -30,6 +30,6 @@ spec:
    spec:
      containers:
      - name: app
-       image: "docker.io/library/dt-pxy:latest"
+       image: "saintlyzero/agni:dt-pxy"
      - name: web
-       image: "docker.io/library/dt-srv:latest"
+       image: "saintlyzero/agni:dt-srv"
