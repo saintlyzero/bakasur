@@ -1,11 +1,13 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 app = FastAPI()
 
 
 @app.get("/")
-def ping():
+def ping(request: Request):
+    print(f"x-trace-id: {request.headers.get('x-trace-id')}")
+    print(f"x-trace-source-id: {request.headers.get('x-trace-id')}")
     return {"message": "Hello from Service :)"}
 
 

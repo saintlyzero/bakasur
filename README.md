@@ -25,3 +25,7 @@ Distributed Tracking based on Service Mesh
 
 Check container logs of all pods
 `kubectl logs <deployment-name> --all-containers -f`
+
+
+### Database Schema
+trace_id, source_id, parent_id, in_time, out_time, status  
