@@ -14,7 +14,8 @@ from starlette.datastructures import Headers
 
 TRACE_SOURCE_ID = "foo"
 SERVICE_ENDPOINT = "http://127.0.0.1:8000/"
-CONTROLLER_ENDPOINT = "http://127.0.0.1:7000/"
+CONTROLLER_ENDPOINT = "http://127.0.0.1:9001/trace"
+REQUEST_TIMEOUT = 10
 
 
 class TraceHeader:
@@ -23,7 +24,8 @@ class TraceHeader:
     PARENT_ID = "x-trace-parent-id"
     TIME = "x-trace-timestamp"
     IS_COMPLETE = "is_complete"
-    
+
+
 class TraceLabel:
     TRACE_ID = "trace_id"
     SOURCE_ID = "source_id"
@@ -88,35 +90,30 @@ def process_headers(headers: Headers) -> Tuple[Headers, TraceData]:
 async def set_http_client(app: FastAPI):
     try:
         logging.info("creating AsyncClient client")
-        service_client = AsyncClient(base_url=SERVICE_ENDPOINT)
-        controller_client = AsyncClient(base_url=CONTROLLER_ENDPOINT)
-        app.state.service_client = service_client
-        app.state.controller_client = controller_client
+        client = AsyncClient(base_url=SERVICE_ENDPOINT, timeout=REQUEST_TIMEOUT)
+        app.state.service_client = client
         yield
     except Exception as e:
-        logging.error("error creating AsyncClient")
+        logging.error("Error creating AsyncClient")
         logging.error(e)
     finally:
         logging.info("closing AsyncClient client")
-        await service_client.aclose()
-        await controller_client.aclose()
-
-
-app = FastAPI(lifespan=set_http_client)
+        await client.aclose()
 
 
 async def hit_controller(trace_data: TraceData):
-    client = app.state.controller_client
-    headers = {"Content-Type": "application/json"}
+    
+    async with httpx.AsyncClient() as client:
+        headers = {"Content-Type": "application/json"}
+        response = await client.post(CONTROLLER_ENDPOINT, headers=headers, json=trace_data.get_dict())
+        
+        if response.status_code == 200:
+            logging.info("success hitting trace collector")
+        else:
+            logging.error("failed hitting trace collector")
 
-    response = await client.post(headers=headers, json=trace_data.get_dict())
 
-    if response.status_code == 200:
-        print("Request successful. Response data:")
-        print(response.text)
-    else:
-        print(f"Request failed with status code {response.status_code}")
-        print(response.text)
+app = FastAPI(lifespan=set_http_client)
 
 
 async def _reverse_proxy(request: Request):
@@ -129,7 +126,6 @@ async def _reverse_proxy(request: Request):
         request.method, url, headers=updated_header.raw, content=await request.body()
     )
 
-    # todo: Check if response headers have trace-id
     rp_resp = await client.send(rp_req, stream=True)
 
     trace_data.set_complete()
@@ -146,4 +142,4 @@ async def _reverse_proxy(request: Request):
 app.add_route("/{path:path}", _reverse_proxy, ["GET"])
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=9000)
+    uvicorn.run("proxy_server:app", host="0.0.0.0", port=9000, reload=True)

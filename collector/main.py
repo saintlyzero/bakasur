@@ -22,8 +22,8 @@ app = FastAPI(title="Trace Collector")
 
 register_tortoise(
     app,
-    # db_url="mysql://root:root@localhost:3306/bakasur",
-    db_url="mysql://root:root@mysql-service:3306/bakasur",
+    db_url="mysql://root:root@localhost:3306/bakasur",
+    # db_url="mysql://root:root@mysql-service:3306/bakasur",
     modules={"models": ["models"]},
     generate_schemas=True,
     add_exception_handlers=True,
