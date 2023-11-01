@@ -17,11 +17,18 @@ SERVICE_ENDPOINT = "http://127.0.0.1:8000/"
 CONTROLLER_ENDPOINT = "http://127.0.0.1:7000/"
 
 
-class TracingHeaders:
+class TraceHeader:
     TRACE_ID = "x-trace-id"
     SOURCE_ID = "x-trace-source-id"
     PARENT_ID = "x-trace-parent-id"
     TIME = "x-trace-timestamp"
+    IS_COMPLETE = "is_complete"
+    
+class TraceLabel:
+    TRACE_ID = "trace_id"
+    SOURCE_ID = "source_id"
+    PARENT_ID = "parent_id"
+    TIME = "timestamp"
     IS_COMPLETE = "is_complete"
 
 
@@ -39,37 +46,37 @@ class TraceData:
         self.trace_id = trace_id
         self.source_id = source_id
         self.parent_id = parent_id
-        self.timestamp = time.time()
+        self.timestamp = int(time.time())
         self.is_complete = is_complete
 
     def get_dict(self) -> dict:
         return {
-            TracingHeaders.TRACE_ID: self.trace_id,
-            TracingHeaders.SOURCE_ID: self.source_id,
-            TracingHeaders.PARENT_IDTRACE_ID: self.parent_id,
-            TracingHeaders.TIME: self.timestamp,
-            TracingHeaders.IS_COMPLETE: self.is_complete,
+            TraceLabel.TRACE_ID: self.trace_id,
+            TraceLabel.SOURCE_ID: self.source_id,
+            TraceLabel.PARENT_ID: self.parent_id,
+            TraceLabel.TIME: self.timestamp,
+            TraceLabel.IS_COMPLETE: self.is_complete,
         }
 
     def set_complete(self):
         self.is_complete = True
-        self.timestamp = time.time()
+        self.timestamp = int(time.time())
 
 
 def process_headers(headers: Headers) -> Tuple[Headers, TraceData]:
     updated_headers = headers.mutablecopy()
 
     # fresh request in the system
-    if TracingHeaders.TRACE_ID not in updated_headers:
-        updated_headers[TracingHeaders.TRACE_ID] = uuid.uuid4().hex
+    if TraceHeader.TRACE_ID not in updated_headers:
+        updated_headers[TraceHeader.TRACE_ID] = uuid.uuid4().hex
 
-    parent_id = updated_headers.get(TracingHeaders.PARENT_ID)
+    parent_id = updated_headers.get(TraceHeader.PARENT_ID)
 
     # make source as parent for future requests
-    updated_headers[TracingHeaders.PARENT_ID] = TRACE_SOURCE_ID
+    updated_headers[TraceHeader.PARENT_ID] = TRACE_SOURCE_ID
 
     trace_data = TraceData(
-        trace_id=updated_headers[TracingHeaders.TRACE_ID],
+        trace_id=updated_headers[TraceHeader.TRACE_ID],
         source_id=TRACE_SOURCE_ID,
         parent_id=parent_id,
     )
