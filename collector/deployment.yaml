@@ -1,33 +1,34 @@
 apiVersion: v1
 kind: Service
 metadata:
- name: svc-dt-c
+ name: collector
 spec:
  selector:
-   role: app
+   role: collector
  ports:
    - protocol: TCP
-     port: 9001
+     port: 80
      targetPort: 9001
-     nodePort: 32002
  type: NodePort
+
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- name: deployment-c
+ name: collector
  labels:
-   role: app
+   role: collector
 spec:
  replicas: 1
  selector:
    matchLabels:
-     role: app
+     role: collector
  template:
    metadata:
      labels:
-       role: app
+       role: collector
    spec:
      containers:
      - name: collector
        image: "saintlyzero/agni:dt-c"
+       imagePullPolicy: Always

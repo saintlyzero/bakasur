@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -12,12 +13,12 @@ from httpx import AsyncClient
 from starlette.background import BackgroundTask
 from starlette.datastructures import Headers
 
-TRACE_SOURCE_ID = "foo"
+TRACE_SOURCE_ID = os.getenv("TRACE_SOURCE_ID", "local_service")
 SERVICE_ENDPOINT = "http://127.0.0.1:8000/"
-CONTROLLER_ENDPOINT = "http://127.0.0.1:9001/trace"
+COLLECTOR_ENDPOINT = "http://collector/trace"
 REQUEST_TIMEOUT = 10
 
-
+timeout = httpx.Timeout(None)
 class TraceHeader:
     TRACE_ID = "x-trace-id"
     SOURCE_ID = "x-trace-source-id"
@@ -90,7 +91,7 @@ def process_headers(headers: Headers) -> Tuple[Headers, TraceData]:
 async def set_http_client(app: FastAPI):
     try:
         logging.info("creating AsyncClient client")
-        client = AsyncClient(base_url=SERVICE_ENDPOINT, timeout=REQUEST_TIMEOUT)
+        client = AsyncClient(base_url=SERVICE_ENDPOINT, timeout=timeout)
         app.state.service_client = client
         yield
     except Exception as e:
@@ -101,12 +102,14 @@ async def set_http_client(app: FastAPI):
         await client.aclose()
 
 
-async def hit_controller(trace_data: TraceData):
-    
+async def hit_collector(trace_data: TraceData):
     async with httpx.AsyncClient() as client:
         headers = {"Content-Type": "application/json"}
-        response = await client.post(CONTROLLER_ENDPOINT, headers=headers, json=trace_data.get_dict())
-        
+        response = await client.post(
+            COLLECTOR_ENDPOINT, headers=headers, json=trace_data.get_dict(),
+            timeout=timeout
+        )
+
         if response.status_code == 200:
             logging.info("success hitting trace collector")
         else:
@@ -120,16 +123,18 @@ async def _reverse_proxy(request: Request):
     client = request.app.state.service_client
     url = httpx.URL(path=request.url.path, query=request.url.query.encode("utf-8"))
     updated_header, trace_data = process_headers(request.headers)
-    await hit_controller(trace_data)
+    await hit_collector(trace_data)
 
     rp_req = client.build_request(
         request.method, url, headers=updated_header.raw, content=await request.body()
     )
 
+    print("Service Request: INIT")
     rp_resp = await client.send(rp_req, stream=True)
+    print("Service Response: SUCCESS")
 
     trace_data.set_complete()
-    await hit_controller(trace_data)
+    await hit_collector(trace_data)
 
     return StreamingResponse(
         rp_resp.aiter_raw(),

@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: service-4
+spec:
+ selector:
+   role: proxy-4
+ ports:
+   - protocol: TCP
+     port: 80
+     targetPort: 9000
+ type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: service-4
+ labels:
+   role: proxy-4
+spec:
+ replicas: 1
+ selector:
+   matchLabels:
+     role: proxy-4
+ template:
+   metadata:
+     labels:
+       role: proxy-4
+   spec:
+     containers:
+     - name: proxy-4
+       image: "saintlyzero/agni:dt-pxy"
+       imagePullPolicy: Always
+       env:
+        - name: TRACE_SOURCE_ID
+          value: service-4
+     - name: ms-4
+       image: "saintlyzero/agni:dt-srv-4"
+       imagePullPolicy: Always
