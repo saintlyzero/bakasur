@@ -12,6 +12,7 @@ class TraceHeader:
 
 
 SERVICE_6_URL = "http://service-6/"
+SERVICE_11_URL = "http://service-11/"
 
 REQUEST_TIMEOUT = 120
 
@@ -41,6 +42,7 @@ async def ping():
 @app.get("/")
 async def task(request: Request):
     await make_request(SERVICE_6_URL, request.headers)
+    await make_request(SERVICE_11_URL, request.headers)
     return {"message": "Hello from Service-5"}
 
 

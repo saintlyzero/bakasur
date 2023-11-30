@@ -21,7 +21,6 @@ app = FastAPI()
 timeout = httpx.Timeout(10.0, read=None)
 
 
-
 async def make_request(url, request_headers: dict):
     print(f"calling service at {url}")
     async with httpx.AsyncClient() as client:

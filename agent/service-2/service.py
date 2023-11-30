@@ -1,6 +1,7 @@
+import requests
 import uvicorn
 from fastapi import FastAPI, Request
-import requests
+
 
 class TraceHeader:
     TRACE_ID = "x-trace-id"
@@ -16,10 +17,10 @@ SERVICE_4_URL = "http://service-4/"
 
 app = FastAPI()
 
-            
+
 def make_request(url, request_headers: dict):
     print(f"calling service at {url}")
-    
+
     headers = {"Content-Type": "application/json"}
     headers[TraceHeader.TRACE_ID] = request_headers[TraceHeader.TRACE_ID]
     headers[TraceHeader.PARENT_ID] = request_headers[TraceHeader.PARENT_ID]

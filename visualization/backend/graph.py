@@ -63,45 +63,43 @@ class Graph:
             to_node.in_time = trace["in_time"]
             to_node.out_time = trace["out_time"]
             to_node.is_complete = trace["is_complete"]
-            
-            
-    def get_sanky_graph_data(self, traces:list):
+
+    def get_sanky_graph_data(self, traces: list):
         sanky_nodes = []
         sanky_edges = []
         for _, node in self.nodes.items():
             node_data = {
                 "name": node.name,
                 "isComplete": node.is_complete,
-                "processingTime": node.get_processing_time()
+                "processingTime": node.get_processing_time(),
             }
             sanky_nodes.append(node_data)
             for edge in node.edges:
                 edge_data = {
-                    "source":edge.from_node.name,
-                    "target":edge.to_node.name,
+                    "source": edge.from_node.name,
+                    "target": edge.to_node.name,
                 }
                 sanky_edges.append(edge_data)
 
         return {"nodes": sanky_nodes, "edges": sanky_edges}
-    
-    def _dfs(self, node:Node) -> dict:
+
+    def _dfs(self, node: Node) -> dict:
         if not node:
-            return 
-        
+            return
+
         node_data = {
             "name": node.name,
             "isComplete": node.is_complete,
             "processingTime": node.get_processing_time(),
-            "children": []
+            "children": [],
         }
-        
+
         for edge in node.edges:
             child_data = self._dfs(edge.to_node)
             node_data["children"].append(child_data)
-            
+
         return node_data
-        
-        
-    def get_tree_graph(self, traces:list) -> dict:
+
+    def get_tree_graph(self, traces: list) -> dict:
         self.generate_graph(traces)
         return self._dfs(self.root)

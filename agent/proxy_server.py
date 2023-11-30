@@ -19,6 +19,8 @@ COLLECTOR_ENDPOINT = "http://collector/trace"
 REQUEST_TIMEOUT = 10
 
 timeout = httpx.Timeout(None)
+
+
 class TraceHeader:
     TRACE_ID = "x-trace-id"
     SOURCE_ID = "x-trace-source-id"
@@ -106,8 +108,10 @@ async def hit_collector(trace_data: TraceData):
     async with httpx.AsyncClient() as client:
         headers = {"Content-Type": "application/json"}
         response = await client.post(
-            COLLECTOR_ENDPOINT, headers=headers, json=trace_data.get_dict(),
-            timeout=timeout
+            COLLECTOR_ENDPOINT,
+            headers=headers,
+            json=trace_data.get_dict(),
+            timeout=timeout,
         )
 
         if response.status_code == 200:
