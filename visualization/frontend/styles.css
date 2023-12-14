@@ -3,12 +3,16 @@ body {
     padding: 0;
     font-family: 'Arial', sans-serif;
     background-color: #f4f4f4;
+    height: 100%;
+    width: 100%;
   }
   
   .container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    align-items: baseline;
+    margin-left: 2%;
+    margin-right: 2%;
   }
   
   #table-section {
@@ -21,15 +25,17 @@ body {
   
   table {
     border-collapse: collapse;
-    width: 60%;
+    width: 100%;
     margin-top: 20px;
+
   }
   
   th,
   td {
     border: 1px solid #ddd;
-    padding: 8px;
+    padding: 3px;
     text-align: center;
+    font-size: 15px;
   }
   
   th {
@@ -39,8 +45,8 @@ body {
   
   #blank-section {
     flex: 1;
+    height: 100%;
     text-align: center;
-    background-color: rgba(85, 210, 208, 0.739);
   }
   
   #title {
@@ -72,4 +78,3 @@ body {
     fill: rgb(147, 4, 4);
     text-anchor: middle;
   }
-  
